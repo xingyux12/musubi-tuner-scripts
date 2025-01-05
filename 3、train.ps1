@@ -32,7 +32,7 @@ $logit_std = 1.0            # logit std | logit 标准差 默认1.0 只在logit_
 $mode_scale = 1.29          # mode scale | mode 缩放 默认1.29 只在mode下生效
 $min_timestep = 0           #最小时序，默认值0
 $max_timestep = 1000        #最大时间步 默认1000
-$show_timesteps = "console" #是否显示timesteps
+$show_timesteps = "image"   #是否显示timesteps
 
 # Learning rate | 学习率
 $lr = "1e-4"
@@ -75,7 +75,7 @@ $fp8_llm = $False                                                               
 $max_data_loader_n_workers = 8                                                      # max data loader n workers | 最大数据加载线程数
 $persistent_data_loader_workers = $True                                             # save every n epochs | 每多少轮保存一次
 
-$blocks_to_swap = ""                                                                # 交换的块数
+$blocks_to_swap = 0                                                                # 交换的块数
 $img_in_txt_in_offloading = $True                                                   # img in txt in offloading
 
 #optimizer
@@ -100,6 +100,44 @@ $save_state = $False                  # save training state | 保存训练状态
 $save_state_on_train_end = $False     # save state on train end |只在训练结束最后保存训练状态
 $save_last_n_epochs_state = ""        # save last n epochs state | 保存最后多少轮训练状态
 $save_last_n_steps_state = ""         # save last n steps state | 保存最后多少步训练状态
+
+#lycoris组件
+$enable_lycoris = 0 # 开启lycoris
+$conv_dim = 0 #卷积 dim，推荐＜32
+$conv_alpha = 0 #卷积 alpha，推荐1或者0.3
+$algo = "lokr" # algo参数，指定训练lycoris模型种类，
+#包括lora(就是locon)、
+#loha
+#IA3
+#lokr
+#dylora
+#full(DreamBooth先训练然后导出lora)
+#diag-oft
+#它通过训练适用于各层输出的正交变换来保留超球面能量。
+#根据原始论文，它的收敛速度比 LoRA 更快，但仍需进行实验。
+#dim 与区块大小相对应：我们在这里固定了区块大小而不是区块数量，以使其与 LoRA 更具可比性。
+
+$dropout = 0 #lycoris专用dropout
+$preset = "attn-mlp" #预设训练模块配置
+#full: default preset, train all the layers in the UNet and CLIP|默认设置，训练所有Unet和Clip层
+#full-lin: full but skip convolutional layers|跳过卷积层
+#attn-mlp: train all the transformer block.|kohya配置，训练所有transformer模块
+#attn-only：only attention layer will be trained, lot of papers only do training on attn layer.|只有注意力层会被训练，很多论文只对注意力层进行训练。
+#unet-transformer-only： as same as kohya_ss/sd_scripts with disabled TE, or, attn-mlp preset with train_unet_only enabled.|和attn-mlp类似，但是关闭te训练
+#unet-convblock-only： only ResBlock, UpSample, DownSample will be trained.|只训练卷积模块，包括res、上下采样模块
+#./toml/example_lycoris.toml: 也可以直接使用外置配置文件，制定各个层和模块使用不同算法训练，需要输入位置文件路径，参考样例已添加。
+
+$factor = 8 #只适用于lokr的因子，-1~8，8为全维度
+$decompose_both = 0 #适用于lokr的参数，对 LoKr 分解产生的两个矩阵执行 LoRA 分解（默认情况下只分解较大的矩阵）
+$block_size = 4 #适用于dylora,分割块数单位，最小1也最慢。一般4、8、12、16这几个选
+$use_tucker = 0 #适用于除 (IA)^3 和full
+$use_scalar = 0 #根据不同算法，自动调整初始权重
+$train_norm = 0 #归一化层
+$dora_wd = 1 #Dora方法分解，低rank使用。适用于LoRA, LoHa, 和LoKr
+$full_matrix = 0  #全矩阵分解
+$bypass_mode = 0 #通道模式，专为 bnb 8 位/4 位线性层设计。(QLyCORIS)适用于LoRA, LoHa, 和LoKr
+$rescaled = 1 #适用于设置缩放，效果等同于OFT
+$constrain = 0 #设置值为FLOAT，效果等同于COFT
 
 #sample | 输出采样图片
 $enable_sample = 1 #1开启出图，0禁用
@@ -679,7 +717,7 @@ if ($async_upload) {
   }
 }
 
-# run Cache
+# run Training
 python -m accelerate.commands.launch --num_cpu_threads_per_process=8 $launch_args "./musubi-tuner/$laungh_script.py" `
   --dataset_config="$dataset_config" `
   --dit=$dit `
@@ -696,5 +734,5 @@ python -m accelerate.commands.launch --num_cpu_threads_per_process=8 $launch_arg
   --sdpa `
   $ext_args
 
-Write-Output "Cache finished"
+Write-Output "Training finished"
 Read-Host | Out-Null ;

@@ -67,7 +67,7 @@ lion-pytorch==0.2.3
     # via -r ./requirements.txt
 markdown==3.7
     # via tensorboard
-markupsafe==3.0.2
+markupsafe==3.0.1
     # via
     #   jinja2
     #   werkzeug

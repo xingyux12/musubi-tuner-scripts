@@ -1,11 +1,11 @@
 ﻿Set-Location $PSScriptRoot
 
 $Env:HF_HOME = "huggingface"
-$Env:HF_ENDPOINT = "https://hf-mirror.com"
+#$Env:HF_ENDPOINT = "https://hf-mirror.com"
 $Env:PIP_DISABLE_PIP_VERSION_CHECK = 1
 $Env:PIP_NO_CACHE_DIR = 1
 #$Env:PIP_INDEX_URL="https://pypi.mirrors.ustc.edu.cn/simple"
-$Env:UV_INDEX_URL = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+#$Env:UV_INDEX_URL = "https://pypi.tuna.tsinghua.edu.cn/simple/"
 $Env:UV_EXTRA_INDEX_URL = "https://download.pytorch.org/whl/cu124"
 $Env:UV_CACHE_DIR = "${env:LOCALAPPDATA}/uv/cache"
 $Env:UV_NO_BUILD_ISOLATION = 1
@@ -33,7 +33,6 @@ function Check {
 try {
     ~/.local/bin/uv --version
     Write-Output "uv installed|UV模块已安装."
-    uv self update
 }
 catch {
     Write-Output "Installing uv|安装uv模块中..."
@@ -109,14 +108,20 @@ Write-Output "Installing main requirements"
 
 ~/.local/bin/uv pip install --upgrade setuptools wheel
 
-~/.local/bin/uv pip sync requirements-uv.txt --index-strategy unsafe-best-match
-Check "Install main requirements failed"
+if ($env:OS -ilike "*windows*") {
+    ~/.local/bin/uv pip sync requirements-uv-windows.txt --index-strategy unsafe-best-match
+    Check "Install main requirements failed"
+}
+else {
+    ~/.local/bin/uv pip sync requirements-uv-linux.txt --index-strategy unsafe-best-match
+    Check "Install main requirements failed"
+}
 
 ~/.local/bin/uv pip install -U --pre git+https://github.com/KohakuBlueleaf/LyCORIS
 
 $download_hy = Read-Host "是否下载HunyuanVideo模型? 若需要下载模型选择 y，若不需要选择 n。[y/n] (默认为 n)"
 if ($download_hy -eq "y" -or $download_hy -eq "Y") {
-    huggingface-cli download tencent/HunyuanVideo --local-dir ./ckpts --exclude "*mp_rank_00_model_states.pt"
+    huggingface-cli download tencent/HunyuanVideo --local-dir ./ckpts --exclude "*mp_rank_00_model_states_fp8*"
 
     if (-not (Test-Path "./ckpts/text_encoder/llava_llama3_fp16.safetensors")) {
         huggingface-cli download Comfy-Org/HunyuanVideo_repackaged split_files/text_encoders/llava_llama3_fp16.safetensors --local-dir ./ckpts/text_encoder
