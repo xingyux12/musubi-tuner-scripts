@@ -2,7 +2,7 @@
 
 # model_path
 $dataset_config = "./toml/qinglong-datasets.toml"                                   # path to dataset config .toml file | 数据集配置文件路径
-$dit = "./ckpts/hunyuan-video-t2v-720p/transformers/mp_rank_00_model_states_fp8.pt" # DiT directory | DiT路径
+$dit = "./ckpts/hunyuan-video-t2v-720p/transformers/mp_rank_00_model_states.pt" # DiT directory | DiT路径
 $vae = "./ckpts/hunyuan-video-t2v-720p/vae/pytorch_model.pt"                        # VAE directory | VAE路径
 $text_encoder1 = "./ckpts/text_encoder/llava_llama3_fp16.safetensors"               # Text Encoder 1 directory | 文本编码器路径
 $text_encoder2 = "./ckpts/text_encoder_2/clip_l.safetensors"                        # Text Encoder 2 directory | 文本编码器路径
@@ -32,7 +32,7 @@ $logit_std = 1.0            # logit std | logit 标准差 默认1.0 只在logit_
 $mode_scale = 1.29          # mode scale | mode 缩放 默认1.29 只在mode下生效
 $min_timestep = 0           #最小时序，默认值0
 $max_timestep = 1000        #最大时间步 默认1000
-$show_timesteps = "image"   #是否显示timesteps
+$show_timesteps = ""        #是否显示timesteps
 
 # Learning rate | 学习率
 $lr = "1e-4"
@@ -60,6 +60,7 @@ $scale_weight_norms = 0 # scale weight norms (1 is a good starting point)| scale
 # $train_text_encoder_only = 0 # train Text Encoder only | 仅训练 文本编码器
 
 #precision and accelerate/save memory
+$attn_mode = "sageattn"                                                             # "flash", "sageattn", "xformers", "sdpa"
 $mixed_precision = "bf16"                                                           # fp16 | fp32 |bf16 default: bf16
 $dit_dtype = ""                                                                     # fp16 | fp32 |bf16 default: bf16
 
@@ -79,7 +80,7 @@ $blocks_to_swap = 0                                                             
 $img_in_txt_in_offloading = $True                                                   # img in txt in offloading
 
 #optimizer
-$optimizer_type = "PagedLion8bit"                                                       
+$optimizer_type = "AdamW8bit"                                                       
 # adamw8bit | adamw32bit | adamw16bit | adafactor | Lion | Lion8bit | 
 # PagedLion8bit | AdamW | AdamW8bit | PagedAdamW8bit | AdEMAMix8bit | PagedAdEMAMix8bit
 # DAdaptAdam | DAdaptLion | DAdaptAdan | DAdaptSGD | Sophia | Prodigy
@@ -140,8 +141,8 @@ $rescaled = 1 #适用于设置缩放，效果等同于OFT
 $constrain = 0 #设置值为FLOAT，效果等同于COFT
 
 #sample | 输出采样图片
-$enable_sample = 1 #1开启出图，0禁用
-$sample_at_first = 0 #是否在训练开始时就出图
+$enable_sample = 0 #1开启出图，0禁用
+$sample_at_first = 1 #是否在训练开始时就出图
 $sample_every_n_epochs = 2 #每n个epoch出一次图
 $sample_prompts = "./toml/qinglong.txt" #prompt文件路径
 
@@ -198,12 +199,25 @@ elseif (Test-Path "./.venv/bin/activate") {
 }
 
 $Env:HF_HOME = "huggingface"
-$Env:HF_ENDPOINT = "https://hf-mirror.com"
+#$Env:HF_ENDPOINT = "https://hf-mirror.com"
 $Env:XFORMERS_FORCE_DISABLE_TRITON = "1"
 $ext_args = [System.Collections.ArrayList]::new()
 $launch_args = [System.Collections.ArrayList]::new()
 $laungh_script = "hv_train_network"
 $network_module = "networks.lora"
+
+if ($attn_mode -ieq "sageattn") {
+  [void]$ext_args.Add("--sage_attn")
+}
+elseif ($attn_mode -ieq "flash") {
+  [void]$ext_args.Add("--flash_attn")
+}
+elseif ($attn_mode -ieq "xformers") {
+  [void]$ext_args.Add("--xformers")
+}
+else{
+  [void]$ext_args.Add("--sdpa")
+}
 
 if ($multi_gpu -eq 1) {
   $launch_args += "--multi_gpu"
@@ -508,12 +522,7 @@ if ($optimizer_type -ieq "Lion" -or $optimizer_type -ieq "Lion8bit" -or $optimiz
   [void]$ext_args.Add("betas=.95,.98")
 }
 
-if ($optimizer_type -ieq "AdamW8bit") {
-  $optimizer_type = ""
-  [void]$ext_args.Add("--use_8bit_adam")
-}
-
-if ($optimizer_type -ieq "PagedAdamW8bit" -or $optimizer_type -ieq "AdamW") {
+if ($optimizer_type -ieq "PagedAdamW8bit" -or $optimizer_type -ieq "AdamW" -or $optimizer_type -ieq "AdamW8bit") {
   [void]$ext_args.Add("--optimizer_type=$optimizer_type")
 }
 
@@ -731,7 +740,6 @@ python -m accelerate.commands.launch --num_cpu_threads_per_process=8 $launch_arg
   --output_name=$output_name `
   --output_dir="./output_dir" `
   --logging_dir="./logs" `
-  --sdpa `
   $ext_args
 
 Write-Output "Training finished"

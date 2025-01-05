@@ -36,6 +36,7 @@ filelock==3.16.1
     #   huggingface-hub
     #   torch
     #   transformers
+    #   triton
 flash-attn @ https://github.com/bdashore3/flash-attention/releases/download/v2.7.1.post1/flash_attn-2.7.1.post1+cu124torch2.5.1cxx11abiFALSE-cp310-cp310-win_amd64.whl
     # via -r ./requirements.txt
 fonttools==4.55.3
@@ -67,7 +68,7 @@ lion-pytorch==0.2.3
     # via -r ./requirements.txt
 markdown==3.7
     # via tensorboard
-markupsafe==3.0.1
+markupsafe==3.0.2
     # via
     #   jinja2
     #   werkzeug
@@ -146,7 +147,7 @@ safetensors==0.4.5
     #   transformers
 sageattention @ https://github.com/sdbds/SageAttention-for-windows/releases/download/2.0.1_20250102/sageattention-2.0.1+cu124torch2.5.1-cp310-cp310-win_amd64.whl
     # via -r ./requirements.txt
-setuptools==75.6.0
+setuptools==75.7.0
     # via tensorboard
 six==1.17.0
     # via
@@ -185,6 +186,8 @@ tqdm==4.67.1
     #   huggingface-hub
     #   transformers
 transformers==4.46.3
+    # via -r ./requirements.txt
+triton @ https://github.com/woct0rdho/triton-windows/releases/download/v3.1.0-windows.post5/triton-3.1.0-cp310-cp310-win_amd64.whl
     # via -r ./requirements.txt
 typing-extensions==4.12.2
     # via

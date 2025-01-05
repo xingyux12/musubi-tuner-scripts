@@ -11,7 +11,7 @@ $device = ""                                                 # cuda | cpu
 $batch_size = ""                                             # batch size, override dataset config if dataset batch size > this
 $num_workers = 0                                             # number of workers for dataset. default is cpu count-1
 $skip_existing = $True                                       # skip existing cache files
-$debug_mode = "console"                                      # image | console
+$debug_mode = ""                                             # image | console
 $console_width = $Host.UI.RawUI.WindowSize.Width             # console width
 $console_back = "black"                                      # console background color
 $console_num_images = 16                                     # number of images to show in console
@@ -21,10 +21,10 @@ $text_encoder1 = "./ckpts/text_encoder/llava_llama3_fp16.safetensors"     # Text
 $text_encoder2 = "./ckpts/text_encoder_2/clip_l.safetensors"              # Text Encoder 2 directory | 文本编码器路径
 $text_encoder_batch_size = "16"                                           # batch size
 $text_encoder_device = ""                                                 # cuda | cpu
-$text_encoder_dtype = ""                                                  # fp16 | fp32 |bf16 default: fp16
+$text_encoder_dtype = "bf16"                                              # fp16 | fp32 |bf16 default: fp16
 $fp8_llm = $False                                                         # enable fp8 for text encoder
 $text_encoder_num_workers = 0                                             # number of workers for dataset. default is cpu count-1
-$text_encoder_skip_existing = $True                                       # skip existing cache files
+$text_encoder_skip_existing = $False                                       # skip existing cache files
 
 # ============= DO NOT MODIFY CONTENTS BELOW | 请勿修改下方内容 =====================
 # Activate python venv
@@ -112,7 +112,7 @@ if ($text_encoder_device) {
 }
 
 if ($text_encoder_dtype) {
-  [void]$ext2_args.Add("--dtype=$text_encoder_dtype")
+  [void]$ext2_args.Add("--text_encoder_dtype=$text_encoder_dtype")
 }
 
 if ($fp8_llm) {
@@ -129,7 +129,7 @@ if ($text_encoder_skip_existing) {
 
 # run Cache
 python "./musubi-tuner/cache_latents.py" `
-  --dataset_config="$dataset_config" `
+  --dataset_config=$dataset_config `
   --vae=$vae $ext_args
 
 python "./musubi-tuner/cache_text_encoder_outputs.py" `
