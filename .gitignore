@@ -170,6 +170,11 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+main.exp
+main.lib
+main.obj
 ckpts/
 huggingface/
 *.safetensors
+logs/
+output_dir/
