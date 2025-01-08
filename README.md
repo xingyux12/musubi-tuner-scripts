@@ -10,11 +10,10 @@
 
 ## Installation
 
-Give unrestricted script access to powershell so venv can work:
-
-- Open an administrator powershell window
-- Type Set-ExecutionPolicy Unrestricted and answer A
-- Close admin powershell window
+Clone the repo:
+    ```
+    git clone --recurse-submodules https://github.com/sdbds/musubi-tuner-scripts.git
+    ```
 
 ### Windows
 Run the following PowerShell script:
