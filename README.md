@@ -10,10 +10,13 @@
 
 ## Installation
 
-Clone the repo:
-    ```
-    git clone --recurse-submodules https://github.com/sdbds/musubi-tuner-scripts.git
-    ```
+Clone the repo with `--recurse-submodules`:
+
+```
+git clone --recurse-submodules https://github.com/sdbds/musubi-tuner-scripts.git
+```
+
+# MUST USE --recurse-submodules
 
 ### Windows
 Run the following PowerShell script:
