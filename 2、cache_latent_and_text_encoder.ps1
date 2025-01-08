@@ -21,7 +21,7 @@ $text_encoder1 = "./ckpts/text_encoder/llava_llama3_fp16.safetensors"     # Text
 $text_encoder2 = "./ckpts/text_encoder_2/clip_l.safetensors"              # Text Encoder 2 directory | 文本编码器路径
 $text_encoder_batch_size = "16"                                           # batch size
 $text_encoder_device = ""                                                 # cuda | cpu
-$text_encoder_dtype = "bf16"                                              # fp16 | fp32 |bf16 default: fp16
+$text_encoder_dtype = ""                                                  # fp16 | fp32 |bf16 default: fp16
 $fp8_llm = $False                                                         # enable fp8 for text encoder
 $text_encoder_num_workers = 0                                             # number of workers for dataset. default is cpu count-1
 $text_encoder_skip_existing = $False                                       # skip existing cache files
@@ -51,6 +51,7 @@ elseif (Test-Path "./.venv/bin/activate") {
 $Env:HF_HOME = "huggingface"
 #$Env:HF_ENDPOINT = "https://hf-mirror.com"
 $Env:XFORMERS_FORCE_DISABLE_TRITON = "1"
+$launch_args = [System.Collections.ArrayList]::new()
 $ext_args = [System.Collections.ArrayList]::new()
 $ext2_args = [System.Collections.ArrayList]::new()
 

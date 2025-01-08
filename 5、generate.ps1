@@ -22,7 +22,7 @@ $fp8 = $true # use fp8 for DiT model
 $fp8_llm = $false # use fp8 for Text Encoder 1 (LLM)
 $device = "" # device to use for inference. If None, use CUDA if available, otherwise use CPU
 $attn_mode = "sageattn" # attention mode
-$split_attn = $false # use split attention
+$split_attn = $true # use split attention
 $vae_chunk_size = 32 # chunk size for CausalConv3d in VAE
 $vae_spatial_tile_sample_min_size = 128 # spatial tile sample min size for VAE, default 256
 $blocks_to_swap = 0 # number of blocks to swap in the model
@@ -76,10 +76,9 @@ if ($device) {
 
 if ($attn_mode) {
     [void]$ext_args.Add("--attn_mode=$attn_mode")
-}
-
-if ($split_attn) {
-    [void]$ext_args.Add("--split_attn")
+    if ($attn_mode -eq "sageattn" -and $split_attn) {
+        [void]$ext_args.Add("--split_attn")
+    }
 }
 
 if ($vae_chunk_size) {

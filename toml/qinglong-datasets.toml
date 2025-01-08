@@ -2,7 +2,7 @@
 
 # general configurations
 [general]
-resolution = [960,960]
+resolution = [768,768]
 caption_extension = ".txt"
 batch_size = 1
 enable_bucket = true

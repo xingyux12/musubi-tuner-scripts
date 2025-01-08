@@ -18,12 +18,13 @@ $base_weights_multiplier = "1.0" #指定合并模型的权重，多个用空格�
 $max_train_steps = ""                                                                # max train steps | 最大训练步数
 $max_train_epochs = 80                                                               # max train epochs | 最大训练轮数
 $gradient_checkpointing = 1                                                          # 梯度检查，开启后可节约显存，但是速度变慢
-$gradient_accumulation_steps = 1                                                     # 梯度累加数量，变相放大batchsize的倍数
+$gradient_accumulation_steps = 4                                                     # 梯度累加数量，变相放大batchsize的倍数
 $guidance_scale = 1.0
 $seed = 1026 # reproducable seed | 设置跑测试用的种子，输入一个prompt和这个种子大概率得到训练图。可以用来试触发关键词
 
 #timestep sampling
 $timestep_sampling = "sigmoid" # 时间步采样方法，可选 sd3用"sigma"、普通DDPM用"uniform" 或 flux用"sigmoid" 或者 "shift". shift需要修改discarete_flow_shift的参数
+$discrete_flow_shift = 1.0 # Euler 离散调度器的离散流位移，sd3默认为3.0
 $sigmoid_scale = 1.0 # sigmoid 采样的缩放因子，默认为 1.0。较大的值会使采样更加均匀
 
 $weighting_scheme = ""      # sigma_sqrt, logit_normal, mode, cosmap, uniform, none
@@ -60,7 +61,7 @@ $scale_weight_norms = 0 # scale weight norms (1 is a good starting point)| scale
 # $train_text_encoder_only = 0 # train Text Encoder only | 仅训练 文本编码器
 
 #precision and accelerate/save memory
-$attn_mode = "sageattn"                                                             # "flash", "sageattn", "xformers", "sdpa"
+$attn_mode = "sdpa"                                                                # "flash", "sageattn", "xformers", "sdpa"
 $mixed_precision = "bf16"                                                           # fp16 |bf16 default: bf16
 $dit_dtype = ""                                                                     # fp16 | fp32 |bf16 default: bf16
 
@@ -77,7 +78,7 @@ $max_data_loader_n_workers = 8                                                  
 $persistent_data_loader_workers = $True                                             # save every n epochs | 每多少轮保存一次
 
 $blocks_to_swap = 0                                                                # 交换的块数
-$img_in_txt_in_offloading = $True                                                   # img in txt in offloading
+$img_in_txt_in_offloading = $False                                                   # img in txt in offloading
 
 #optimizer
 $optimizer_type = "AdamW8bit"                                                       
@@ -215,7 +216,7 @@ elseif ($attn_mode -ieq "flash") {
 elseif ($attn_mode -ieq "xformers") {
   [void]$ext_args.Add("--xformers")
 }
-else{
+else {
   [void]$ext_args.Add("--sdpa")
 }
 
@@ -248,11 +249,16 @@ if ($multi_gpu -eq 1) {
   }
 }
 
-if ($timestep_sampling) {
+if ($timestep_sampling -ine "sigma") {
   [void]$ext_args.Add("--timestep_sampling=$timestep_sampling")
-}
-if ($sigmoid_scale) {
-  [void]$ext_args.Add("--sigmoid_scale=$sigmoid_scale")
+  if ($timestep_sampling -ieq "sigmoid" -or $timestep_sampling -ieq "shift") {
+    if ($discrete_flow_shift -ne 1.0 -and $timestep_sampling -ieq "shift") {
+      [void]$ext_args.Add("--discrete_flow_shift=$discrete_flow_shift")
+    }
+    if ($sigmoid_scale -ne 1.0) {
+      [void]$ext_args.Add("--sigmoid_scale=$sigmoid_scale")
+    }
+  }
 }
 if ($guidance_scale) {
   [void]$ext_args.Add("--guidance_scale=$guidance_scale")
@@ -632,7 +638,7 @@ if ($optimizer_type -ieq "sara") {
   [void]$ext_args.Add("threshold=2e-3")
 }
 
-if ($max_grad_norm) {
+if ($max_grad_norm -ne 1.0) {
   [void]$ext_args.Add("--max_grad_norm=$max_grad_norm")
 }
 
