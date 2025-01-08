@@ -1,5 +1,9 @@
 # musubi-tuner-scripts
 
+original codebase from kohya_ss
+
+https://github.com/kohya-ss/musubi-tuner
+
 ## 🔧 Setting up the Environment
 
   Give unrestricted script access to powershell so venv can work:
