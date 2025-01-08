@@ -35,7 +35,7 @@ $max_timestep = 1000        #最大时间步 默认1000
 $show_timesteps = ""        #是否显示timesteps
 
 # Learning rate | 学习率
-$lr = "1e-4"
+$lr = "1e-3"
 # $unet_lr = "5e-4"
 # $text_encoder_lr = "2e-5"
 $lr_scheduler = "cosine_with_min_lr"
@@ -61,7 +61,7 @@ $scale_weight_norms = 0 # scale weight norms (1 is a good starting point)| scale
 
 #precision and accelerate/save memory
 $attn_mode = "sageattn"                                                             # "flash", "sageattn", "xformers", "sdpa"
-$mixed_precision = "bf16"                                                           # fp16 | fp32 |bf16 default: bf16
+$mixed_precision = "bf16"                                                           # fp16 |bf16 default: bf16
 $dit_dtype = ""                                                                     # fp16 | fp32 |bf16 default: bf16
 
 $vae_dtype = ""                                                                     # fp16 | fp32 |bf16 default: fp16
@@ -434,6 +434,9 @@ if ($lr_scheduler_min_lr_ratio) {
 
 if ($mixed_precision) {
   [void]$launch_args.Add("--mixed_precision=$mixed_precision")
+  if ($mixed_precision -ieq "bf16" -or $mixed_precision -ieq "bfloat16") {
+    [void]$launch_args.Add("--downcast_bf16")
+  }
   [void]$ext_args.Add("--mixed_precision=$mixed_precision")
 }
 
