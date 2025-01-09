@@ -1,3 +1,6 @@
 [submodule "musubi-tuner"]
 	path = musubi-tuner
 	url = https://github.com/sdbds/musubi-tuner
+[submodule "qinglong-captions"]
+	path = qinglong-captions
+	url = https://github.com/sdbds/qinglong-captions
