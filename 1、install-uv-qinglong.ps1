@@ -119,7 +119,7 @@ else {
     Check "Install main requirements failed"
 }
 
-~/.local/bin/uv pip install -U --pre git+https://github.com/KohakuBlueleaf/LyCORIS
+~/.local/bin/uv pip install -U --pre git+https://github.com/sdbds/LyCORIS
 
 $download_hy = Read-Host "是否下载HunyuanVideo模型? 若需要下载模型选择 y，若不需要选择 n。[y/n] (默认为 n)"
 if ($download_hy -eq "y" -or $download_hy -eq "Y") {

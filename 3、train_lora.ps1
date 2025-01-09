@@ -1,4 +1,7 @@
-# Cache script by @bdsqlsz
+# Train script by @bdsqlsz
+
+#训练模式(Lora、db)
+$train_mode = "Lora"
 
 # model_path
 $dataset_config = "./toml/qinglong-datasets.toml"                                   # path to dataset config .toml file | 数据集配置文件路径
@@ -16,7 +19,7 @@ $base_weights_multiplier = "1.0" #指定合并模型的权重，多个用空格�
 
 #train config | 训练配置
 $max_train_steps = ""                                                                # max train steps | 最大训练步数
-$max_train_epochs = 80                                                               # max train epochs | 最大训练轮数
+$max_train_epochs = 40                                                               # max train epochs | 最大训练轮数
 $gradient_checkpointing = 1                                                          # 梯度检查，开启后可节约显存，但是速度变慢
 $gradient_accumulation_steps = 4                                                     # 梯度累加数量，变相放大batchsize的倍数
 $guidance_scale = 1.0
@@ -28,15 +31,15 @@ $discrete_flow_shift = 1.0 # Euler 离散调度器的离散流位移，sd3默认
 $sigmoid_scale = 1.0 # sigmoid 采样的缩放因子，默认为 1.0。较大的值会使采样更加均匀
 
 $weighting_scheme = ""      # sigma_sqrt, logit_normal, mode, cosmap, uniform, none
-$logit_mean = 0.0           # logit mean | logit 均值 默认0.0 只在logit_normal下生效
-$logit_std = 1.0            # logit std | logit 标准差 默认1.0 只在logit_normal下生效
+$logit_mean = 0           # logit mean | logit 均值 默认0.0 只在logit_normal下生效
+$logit_std = 0            # logit std | logit 标准差 默认1.0 只在logit_normal下生效
 $mode_scale = 1.29          # mode scale | mode 缩放 默认1.29 只在mode下生效
 $min_timestep = 0           #最小时序，默认值0
 $max_timestep = 1000        #最大时间步 默认1000
-$show_timesteps = ""        #是否显示timesteps
+$show_timesteps = "" #是否显示timesteps， console/images
 
 # Learning rate | 学习率
-$lr = "1e-3"
+$lr = "3e-3"
 # $unet_lr = "5e-4"
 # $text_encoder_lr = "2e-5"
 $lr_scheduler = "cosine_with_min_lr"
@@ -63,6 +66,8 @@ $scale_weight_norms = 0 # scale weight norms (1 is a good starting point)| scale
 #precision and accelerate/save memory
 $attn_mode = "sdpa"                                                                # "flash", "sageattn", "xformers", "sdpa"
 $mixed_precision = "bf16"                                                           # fp16 |bf16 default: bf16
+# $full_fp16 = $False
+# $full_bf16 = $True
 $dit_dtype = ""                                                                     # fp16 | fp32 |bf16 default: bf16
 
 $vae_dtype = ""                                                                     # fp16 | fp32 |bf16 default: fp16
@@ -78,7 +83,7 @@ $max_data_loader_n_workers = 8                                                  
 $persistent_data_loader_workers = $True                                             # save every n epochs | 每多少轮保存一次
 
 $blocks_to_swap = 0                                                                # 交换的块数
-$img_in_txt_in_offloading = $False                                                   # img in txt in offloading
+$img_in_txt_in_offloading = $True                                                   # img in txt in offloading
 
 #optimizer
 $optimizer_type = "AdamW8bit"                                                       
@@ -104,7 +109,7 @@ $save_last_n_epochs_state = ""        # save last n epochs state | 保存最后�
 $save_last_n_steps_state = ""         # save last n steps state | 保存最后多少步训练状态
 
 #lycoris组件
-$enable_lycoris = 0 # 开启lycoris
+$enable_lycoris = 1 # 开启lycoris
 $conv_dim = 0 #卷积 dim，推荐＜32
 $conv_alpha = 0 #卷积 alpha，推荐1或者0.3
 $algo = "lokr" # algo参数，指定训练lycoris模型种类，
@@ -167,7 +172,7 @@ $resume_from_huggingface = $False # resume from huggingface | 从huggingface恢�
 
 #DDP | 多卡设置
 $multi_gpu = 0                         #multi gpu | 多显卡训练开关，0关1开， 该参数仅限在显卡数 >= 2 使用
-$highvram = 0                            #高显存模式，开启后会尽量使用显存
+# $highvram = 0                            #高显存模式，开启后会尽量使用显存
 # $deepspeed = 0                         #deepspeed | 使用deepspeed训练，0关1开， 该参数仅限在显卡数 >= 2 使用
 # $zero_stage = 2                        #zero stage | zero stage 0,1,2,3,阶段2用于训练 该参数仅限在显卡数 >= 2 使用
 # $offload_optimizer_device = ""      #offload optimizer device | 优化器放置设备，cpu或者nvme, 该参数仅限在显卡数 >= 2 使用
@@ -207,6 +212,18 @@ $launch_args = [System.Collections.ArrayList]::new()
 $laungh_script = "hv_train_network"
 $network_module = "networks.lora"
 
+if (-not ($train_mode -ilike "*lora")) {
+  $network_module = ""
+  $network_dim = ""
+  $network_alpha = ""
+  $network_weights = ""
+  $dim_from_weights = $False
+  $scale_weight_norms = 0
+  $enable_lycoris = 0
+  $training_comment = ""
+  $network_dropout = "0"
+}
+
 if ($attn_mode -ieq "sageattn") {
   [void]$ext_args.Add("--sage_attn")
 }
@@ -244,9 +261,9 @@ if ($multi_gpu -eq 1) {
   if ($ddp_static_graph -ne 0) {
     [void]$ext_args.Add("--ddp_static_graph")
   }
-  if ($highvram -ne 0) {
-    [void]$ext_args.Add("--highvram")
-  }
+  # if ($highvram -ne 0) {
+  #   [void]$ext_args.Add("--highvram")
+  # }
 }
 
 if ($timestep_sampling -ine "sigma") {
@@ -437,6 +454,15 @@ if ($lr_scheduler_timescale) {
 if ($lr_scheduler_min_lr_ratio) {
   [void]$ext_args.Add("--lr_scheduler_min_lr_ratio=$lr_scheduler_min_lr_ratio")
 }
+
+# if ($full_fp16) {
+#   [void]$ext_args.Add("--full_fp16")
+#   $mixed_precision = "fp16"
+# }
+# elseif ($full_bf16) {
+#   [void]$ext_args.Add("--full_bf16")
+#   $mixed_precision = "bf16"
+# }
 
 if ($mixed_precision) {
   [void]$launch_args.Add("--mixed_precision=$mixed_precision")
