@@ -1,0 +1,18 @@
+# resolution, caption_extension, batch_size, enable_bucket, bucket_no_upscale must be set in either general or datasets
+
+# general configurations
+[general]
+resolution = [720,480]
+caption_extension = ".txt"
+batch_size = 1
+enable_bucket = true
+bucket_no_upscale = false
+
+[[datasets]]
+video_directory = "./train/video"
+cache_directory = "./train/video/cache"
+target_frames = [1, 13, 25]
+frame_sample = 4
+frame_extraction = "uniform"
+
+# other datasets can be added here. each dataset can have different configurations

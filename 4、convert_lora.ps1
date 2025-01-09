@@ -1,3 +1,5 @@
+# Convert script by @bdsqlsz
+
 $input_path="./output_dir/hyvideo-qinglong.safetensors"
 $output_path="./output_dir/hyvideo-qinglong_comfy.safetensors"
 $target="other" # "other" or "default"

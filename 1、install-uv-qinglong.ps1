@@ -1,4 +1,6 @@
-﻿Set-Location $PSScriptRoot
+﻿# Install script by @bdsqlsz
+
+Set-Location $PSScriptRoot
 
 $Env:HF_HOME = "huggingface"
 #$Env:HF_ENDPOINT = "https://hf-mirror.com"
@@ -61,7 +63,7 @@ if ($env:OS -ilike "*windows*") {
                 Write-Host "C: drive free space: ${FreeSpaceGB}GB"
                 
                 # $Env:UV cache directory based on available space
-                if ($FreeSpaceGB -lt 10) {
+                if ($FreeSpaceGB -lt 20) {
                     Write-Host "Low disk space detected. Using local .cache directory"
                     $Env:UV_CACHE_DIR = ".cache"
                 } 

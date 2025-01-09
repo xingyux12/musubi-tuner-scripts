@@ -1,4 +1,6 @@
-# Parameters from hv_generate_video.py
+#Generate videos script by @bdsqlsz
+
+#Parameters from hv_generate_video.py
 $dit = "./ckpts/hunyuan-video-t2v-720p/transformers/mp_rank_00_model_states.pt" # DiT checkpoint path or directory
 $vae = "./ckpts/hunyuan-video-t2v-720p/vae/pytorch_model.pt" # VAE checkpoint path or directory
 $vae_dtype = "" # data type for VAE, default is float16
@@ -6,9 +8,22 @@ $text_encoder1 = "./ckpts/text_encoder/llava_llama3_fp16.safetensors" # Text Enc
 $text_encoder2 = "./ckpts/text_encoder_2/clip_l.safetensors" # Text Encoder 2 directory
 
 # LoRA
+$lora_weight = "./output_dir/hyvideo-qinglong.safetensors" # LoRA weight path
 $lora_multiplier = "1.0" # LoRA multiplier
 
-$video_size = "272 544" # video size
+$prompt = """ a girl with long, flowing green hair adorned with a hair
+ornament, a yellow flower, and a yellow rose. Her hair falls between her
+eyes, and she has heterochromia, with one eye being blue and the other brown
+or yellow. She is looking directly at the viewer with her mouth slightly
+open, then laughting. Her attire consists of a green crop top
+with puffy short sleeves, which are detached, revealing her collarbone and
+bare shoulders. The top is complemented by a green skirt, and she wears a
+green choker around her neck. Adding to her unique appearance, she has deer
+ears and reindeer antlers, and a mini crown rests atop her head. A brooch and
+a green bow further accentuate her outfit. The background is simple and
+black, ensuring that the focus remains solely on the a girl.
+"""
+$video_size = "544 544" # video size
 $video_length = 129 # video length
 $infer_steps = 50 # number of inference steps
 $save_path = "./output_dir" # path to save generated video
