@@ -178,3 +178,4 @@ huggingface/
 *.safetensors
 logs/
 output_dir/
+train/
