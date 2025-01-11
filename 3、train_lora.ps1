@@ -65,6 +65,7 @@ $scale_weight_norms = 0 # scale weight norms (1 is a good starting point)| scale
 
 #precision and accelerate/save memory
 $attn_mode = "sdpa"                                                                # "flash", "sageattn", "xformers", "sdpa"
+$split_attn = $True                                                                 # split attention | split attention
 $mixed_precision = "bf16"                                                           # fp16 |bf16 default: bf16
 # $full_fp16 = $False
 # $full_bf16 = $True
@@ -82,7 +83,7 @@ $fp8_llm = $False                                                               
 $max_data_loader_n_workers = 8                                                      # max data loader n workers | 最大数据加载线程数
 $persistent_data_loader_workers = $True                                             # save every n epochs | 每多少轮保存一次
 
-$blocks_to_swap = 0                                                                # 交换的块数
+$blocks_to_swap = 0                                                                 # 交换的块数
 $img_in_txt_in_offloading = $True                                                   # img in txt in offloading
 
 #optimizer
@@ -232,9 +233,14 @@ elseif ($attn_mode -ieq "flash") {
 }
 elseif ($attn_mode -ieq "xformers") {
   [void]$ext_args.Add("--xformers")
+  $split_attn = $True
 }
 else {
   [void]$ext_args.Add("--sdpa")
+}
+
+if ($split_attn) {
+  [void]$ext_args.Add("--split_attn")
 }
 
 if ($multi_gpu -eq 1) {
@@ -550,11 +556,20 @@ if ($optimizer_type -ilike "DAdapt*") {
   }
 }
 
-if ($optimizer_type -ieq "Lion" -or $optimizer_type -ieq "Lion8bit" -or $optimizer_type -ieq "PagedLion8bit") {
+if ($optimizer_type -ieq "Lion8bit" -or $optimizer_type -ieq "PagedLion8bit") {
   [void]$ext_args.Add("--optimizer_type=$optimizer_type")
   [void]$ext_args.Add("--optimizer_args")
   [void]$ext_args.Add("weight_decay=0.01")
   [void]$ext_args.Add("betas=.95,.98")
+}
+
+
+if ($optimizer_type -ieq "Lion") {
+  [void]$ext_args.Add("--optimizer_type=pytorch_optimizer.Lion")
+  [void]$ext_args.Add("--optimizer_args")
+  [void]$ext_args.Add("weight_decay=0.01")
+  [void]$ext_args.Add("betas=.95,.98")
+  [void]$ext_args.Add("cautious=True")
 }
 
 if ($optimizer_type -ieq "PagedAdamW8bit" -or $optimizer_type -ieq "AdamW" -or $optimizer_type -ieq "AdamW8bit") {
@@ -657,11 +672,14 @@ if ($optimizer_type -ieq "SOAP") {
   [void]$ext_args.Add("--optimizer_type=pytorch_optimizer.SOAP")
 }
 
-if ($optimizer_type -ieq "sara") {
-  [void]$ext_args.Add("--optimizer_type=$optimizer_type")
+if ($optimizer_type -ieq "sgdsai") {
+  [void]$ext_args.Add("--optimizer_type=pytorch_optimizer.SGDSaI")
+}
+
+if ($optimizer_type -ieq "adopt") {
+  [void]$ext_args.Add("--optimizer_type=pytorch_optimizer.ADOPT")
   [void]$ext_args.Add("--optimizer_args")
-  [void]$ext_args.Add("weight_decay=0.01")
-  [void]$ext_args.Add("threshold=2e-3")
+  [void]$ext_args.Add("cautious=True")
 }
 
 if ($max_grad_norm -ne 1.0) {
