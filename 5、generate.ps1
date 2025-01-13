@@ -23,7 +23,7 @@ ears and reindeer antlers, and a mini crown rests atop her head. A brooch and
 a green bow further accentuate her outfit. The background is simple and
 black, ensuring that the focus remains solely on the a girl.
 """
-$video_size = "544 544" # video size
+$video_size = "512 512" # video size
 $video_length = 129 # video length
 $infer_steps = 50 # number of inference steps
 $save_path = "./output_dir" # path to save generated video

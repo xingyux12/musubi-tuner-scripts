@@ -39,7 +39,7 @@ $max_timestep = 1000        #最大时间步 默认1000
 $show_timesteps = "" #是否显示timesteps， console/images
 
 # Learning rate | 学习率
-$lr = "3e-3"
+$lr = "1e-3"
 # $unet_lr = "5e-4"
 # $text_encoder_lr = "2e-5"
 $lr_scheduler = "cosine_with_min_lr"
@@ -47,7 +47,7 @@ $lr_scheduler = "cosine_with_min_lr"
 # constant，常量不变, constant_with_warmup 线性增加后保持常量不变, linear 线性增加线性减少, polynomial 线性增加后平滑衰减, cosine 余弦波曲线, cosine_with_restarts 余弦波硬重启，瞬间最大值。
 # 新增cosine_with_min_lr(适合训练lora)、warmup_stable_decay(适合训练db)、inverse_sqrt
 $lr_warmup_steps = 0 # warmup steps | 学习率预热步数，lr_scheduler 为 constant 或 adafactor 时该值需要设为0。仅在 lr_scheduler 为 constant_with_warmup 时需要填写这个值
-$lr_decay_steps = 0.25 # decay steps | 学习率衰减步数，仅在 lr_scheduler 为warmup_stable_decay时 需要填写，一般是10%总步数
+$lr_decay_steps = 0.2 # decay steps | 学习率衰减步数，仅在 lr_scheduler 为warmup_stable_decay时 需要填写，一般是10%总步数
 $lr_scheduler_num_cycles = 1 # restarts nums | 余弦退火重启次数，仅在 lr_scheduler 为 cosine_with_restarts 时需要填写这个值
 $lr_scheduler_power = 1     #Polynomial power for polynomial scheduler |余弦退火power
 $lr_scheduler_timescale = 0 #times scale |时间缩放，仅在 lr_scheduler 为 inverse_sqrt 时需要填写这个值，默认同lr_warmup_steps
@@ -57,14 +57,14 @@ $lr_scheduler_min_lr_ratio = 0.1 #min lr ratio |最小学习率比率，仅在 l
 $network_dim = 32 # network dim | 常用 4~128，不是越大越好
 $network_alpha = 16 # network alpha | 常用与 network_dim 相同的值或者采用较小的值，如 network_dim的一半 防止下溢。默认值为 1，使用较小的 alpha 需要提升学习率。
 $network_dropout = 0 # network dropout | 常用 0~0.3
-$dim_from_weights = $True # use dim from weights | 从已有的 LoRA 模型上继续训练时，自动获取 dim
+$dim_from_weights = $False # use dim from weights | 从已有的 LoRA 模型上继续训练时，自动获取 dim
 $scale_weight_norms = 0 # scale weight norms (1 is a good starting point)| scale weight norms (1 is a good starting point)
 
 # $train_unet_only = 1 # train U-Net only | 仅训练 U-Net，开启这个会牺牲效果大幅减少显存使用。6G显存可以开启
 # $train_text_encoder_only = 0 # train Text Encoder only | 仅训练 文本编码器
 
 #precision and accelerate/save memory
-$attn_mode = "sdpa"                                                                # "flash", "sageattn", "xformers", "sdpa"
+$attn_mode = "xformers"                                                                # "flash", "sageattn", "xformers", "sdpa"
 $split_attn = $True                                                                 # split attention | split attention
 $mixed_precision = "bf16"                                                           # fp16 |bf16 default: bf16
 # $full_fp16 = $False
@@ -87,7 +87,7 @@ $blocks_to_swap = 0                                                             
 $img_in_txt_in_offloading = $True                                                   # img in txt in offloading
 
 #optimizer
-$optimizer_type = "AdamW8bit"                                                       
+$optimizer_type = "adopt"                                                       
 # adamw8bit | adamw32bit | adamw16bit | adafactor | Lion | Lion8bit | 
 # PagedLion8bit | AdamW | AdamW8bit | PagedAdamW8bit | AdEMAMix8bit | PagedAdEMAMix8bit
 # DAdaptAdam | DAdaptLion | DAdaptAdan | DAdaptSGD | Sophia | Prodigy
@@ -110,7 +110,7 @@ $save_last_n_epochs_state = ""        # save last n epochs state | 保存最后�
 $save_last_n_steps_state = ""         # save last n steps state | 保存最后多少步训练状态
 
 #lycoris组件
-$enable_lycoris = 1 # 开启lycoris
+$enable_lycoris = 0 # 开启lycoris
 $conv_dim = 0 #卷积 dim，推荐＜32
 $conv_alpha = 0 #卷积 alpha，推荐1或者0.3
 $algo = "lokr" # algo参数，指定训练lycoris模型种类，
@@ -137,15 +137,16 @@ $preset = "attn-mlp" #预设训练模块配置
 
 $factor = 8 #只适用于lokr的因子，-1~8，8为全维度
 $decompose_both = 0 #适用于lokr的参数，对 LoKr 分解产生的两个矩阵执行 LoRA 分解（默认情况下只分解较大的矩阵）
+$decompose_both = $false #适用于lokr的参数，对 LoKr 分解产生的两个矩阵执行 LoRA 分解（默认情况下只分解较大的矩阵）
 $block_size = 4 #适用于dylora,分割块数单位，最小1也最慢。一般4、8、12、16这几个选
-$use_tucker = 0 #适用于除 (IA)^3 和full
-$use_scalar = 0 #根据不同算法，自动调整初始权重
-$train_norm = 0 #归一化层
+$use_tucker = $false #适用于除 (IA)^3 和full
+$use_scalar = $false #根据不同算法，自动调整初始权重
+$train_norm = $false #归一化层
 $dora_wd = 1 #Dora方法分解，低rank使用。适用于LoRA, LoHa, 和LoKr
-$full_matrix = 0  #全矩阵分解
-$bypass_mode = 0 #通道模式，专为 bnb 8 位/4 位线性层设计。(QLyCORIS)适用于LoRA, LoHa, 和LoKr
+$full_matrix = $false  #全矩阵分解
+$bypass_mode = $false #通道模式，专为 bnb 8 位/4 位线性层设计。(QLyCORIS)适用于LoRA, LoHa, 和LoKr
 $rescaled = 1 #适用于设置缩放，效果等同于OFT
-$constrain = 0 #设置值为FLOAT，效果等同于COFT
+$constrain = $false #设置值为FLOAT，效果等同于COFT
 
 #sample | 输出采样图片
 $enable_sample = 0 #1开启出图，0禁用
@@ -527,11 +528,12 @@ if ($img_in_txt_in_offloading) {
 }
 
 if ($optimizer_type -ieq "adafactor") {
-  [void]$ext_args.Add("--optimizer_type=$optimizer_type")
+  [void]$ext_args.Add("--optimizer_type=pytorch_optimizer.AdaFactor")
   [void]$ext_args.Add("--optimizer_args")
   [void]$ext_args.Add("scale_parameter=False")
   [void]$ext_args.Add("warmup_init=False")
   [void]$ext_args.Add("relative_step=False")
+  [void]$ext_args.Add("cautious=True")
   if ($lr_scheduler -and $lr_scheduler -ine "constant") {
     $lr_warmup_steps = 100
   }
@@ -567,8 +569,6 @@ if ($optimizer_type -ieq "Lion8bit" -or $optimizer_type -ieq "PagedLion8bit") {
 if ($optimizer_type -ieq "Lion") {
   [void]$ext_args.Add("--optimizer_type=pytorch_optimizer.Lion")
   [void]$ext_args.Add("--optimizer_args")
-  [void]$ext_args.Add("weight_decay=0.01")
-  [void]$ext_args.Add("betas=.95,.98")
   [void]$ext_args.Add("cautious=True")
 }
 
@@ -580,6 +580,13 @@ if ($optimizer_type -ieq "PagedAdEMAMix8bit" -or $optimizer_type -ieq "AdEMAMix8
   [void]$ext_args.Add("--optimizer_type=$optimizer_type")
   [void]$ext_args.Add("--optimizer_args")
   [void]$ext_args.Add("weight_decay=0.01")
+}
+
+if ($optimizer_type -ieq "ademamix") {
+  [void]$ext_args.Add("--optimizer_type=pytorch_optimizer.AdEMAMix")
+  [void]$ext_args.Add("--optimizer_args")
+  [void]$ext_args.Add("alpha=10")
+  [void]$ext_args.Add("cautious=True")
 }
 
 if ($optimizer_type -ieq "Sophia") {
