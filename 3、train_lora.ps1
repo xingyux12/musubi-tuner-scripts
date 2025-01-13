@@ -111,16 +111,15 @@ $save_last_n_steps_state = ""         # save last n steps state | 保存最后�
 
 #LORA_PLUS
 $enable_lora_plus = $True
-$loraplus_lr_ratio = 4
+$loraplus_lr_ratio = 4                #recommend 4~16
 
 #target blocks
-$enable_blocks = $True
-$enable_double_blocks_only = $True
+$enable_blocks = $False
+$enable_double_blocks_only = $False
 $exclude_patterns="" # Specify the values as a list. For example, "exclude_patterns=[r'.*single_blocks.*', r'.*double_blocks\.[0-9]\..*']".
 $include_patterns="" # Specify the values as a list. For example, "include_patterns=[r'.*single_blocks\.\d{2}\.linear.*']".
 
 #lycoris组件
-$enable_lycoris = 0 # 开启lycoris
 $enable_lycoris = $False # 开启lycoris
 $conv_dim = 0 #卷积 dim，推荐＜32
 $conv_alpha = 0 #卷积 alpha，推荐1或者0.3
@@ -147,7 +146,6 @@ $preset = "attn-mlp" #预设训练模块配置
 #./toml/example_lycoris.toml: 也可以直接使用外置配置文件，制定各个层和模块使用不同算法训练，需要输入位置文件路径，参考样例已添加。
 
 $factor = 8 #只适用于lokr的因子，-1~8，8为全维度
-$decompose_both = 0 #适用于lokr的参数，对 LoKr 分解产生的两个矩阵执行 LoRA 分解（默认情况下只分解较大的矩阵）
 $decompose_both = $false #适用于lokr的参数，对 LoKr 分解产生的两个矩阵执行 LoRA 分解（默认情况下只分解较大的矩阵）
 $block_size = 4 #适用于dylora,分割块数单位，最小1也最慢。一般4、8、12、16这几个选
 $use_tucker = $false #适用于除 (IA)^3 和full
@@ -184,7 +182,7 @@ $save_state_to_huggingface = $False # save state to huggingface | 保存训练�
 $resume_from_huggingface = $False # resume from huggingface | 从huggingface恢复训练
 
 #DDP | 多卡设置
-$multi_gpu = 0                         #multi gpu | 多显卡训练开关，0关1开， 该参数仅限在显卡数 >= 2 使用
+$multi_gpu = $False                         #multi gpu | 多显卡训练开关，0关1开， 该参数仅限在显卡数 >= 2 使用
 # $highvram = 0                            #高显存模式，开启后会尽量使用显存
 # $deepspeed = 0                         #deepspeed | 使用deepspeed训练，0关1开， 该参数仅限在显卡数 >= 2 使用
 # $zero_stage = 2                        #zero stage | zero stage 0,1,2,3,阶段2用于训练 该参数仅限在显卡数 >= 2 使用
@@ -257,7 +255,7 @@ if ($split_attn) {
   [void]$ext_args.Add("--split_attn")
 }
 
-if ($multi_gpu -eq 1) {
+if ($multi_gpu) {
   $launch_args += "--multi_gpu"
   $launch_args += "--rdzv_backend=c10d"
   # if ($deepspeed -eq 1) {

@@ -43,7 +43,11 @@ use sudo pwsh if you in Linux.
 
 edit 2、3、4 script before you run.
 
-### 2、cache_latent_and_text_encoder.ps1
+<details>
+<summary>
+
+### 2、cache_latent_and_text_encoder.ps1</summary>
+
 ```
 # Cache lantent
 $dataset_config = "./toml/qinglong-datasets.toml"            # path to dataset config .toml file | 数据集配置文件路径
@@ -71,9 +75,18 @@ $fp8_llm = $False                                                         # enab
 $text_encoder_num_workers = 0                                             # number of workers for dataset. default is cpu count-1
 $text_encoder_skip_existing = $False                                       # skip existing cache files
 ```
+</details>
+
+<details>
+<summary>
 
 ### 3、train.ps1
+</summary>
+
 ```
+#训练模式(Lora、db)
+$train_mode = "Lora"
+
 # model_path
 $dataset_config = "./toml/qinglong-datasets.toml"                                   # path to dataset config .toml file | 数据集配置文件路径
 $dit = "./ckpts/hunyuan-video-t2v-720p/transformers/mp_rank_00_model_states.pt" # DiT directory | DiT路径
@@ -90,26 +103,27 @@ $base_weights_multiplier = "1.0" #指定合并模型的权重，多个用空格�
 
 #train config | 训练配置
 $max_train_steps = ""                                                                # max train steps | 最大训练步数
-$max_train_epochs = 80                                                               # max train epochs | 最大训练轮数
+$max_train_epochs = 15                                                               # max train epochs | 最大训练轮数
 $gradient_checkpointing = 1                                                          # 梯度检查，开启后可节约显存，但是速度变慢
-$gradient_accumulation_steps = 1                                                     # 梯度累加数量，变相放大batchsize的倍数
+$gradient_accumulation_steps = 4                                                     # 梯度累加数量，变相放大batchsize的倍数
 $guidance_scale = 1.0
 $seed = 1026 # reproducable seed | 设置跑测试用的种子，输入一个prompt和这个种子大概率得到训练图。可以用来试触发关键词
 
 #timestep sampling
 $timestep_sampling = "sigmoid" # 时间步采样方法，可选 sd3用"sigma"、普通DDPM用"uniform" 或 flux用"sigmoid" 或者 "shift". shift需要修改discarete_flow_shift的参数
+$discrete_flow_shift = 1.0 # Euler 离散调度器的离散流位移，sd3默认为3.0
 $sigmoid_scale = 1.0 # sigmoid 采样的缩放因子，默认为 1.0。较大的值会使采样更加均匀
 
 $weighting_scheme = ""      # sigma_sqrt, logit_normal, mode, cosmap, uniform, none
-$logit_mean = 0.0           # logit mean | logit 均值 默认0.0 只在logit_normal下生效
+$logit_mean = 0           # logit mean | logit 均值 默认0.0 只在logit_normal下生效
 $logit_std = 1.0            # logit std | logit 标准差 默认1.0 只在logit_normal下生效
 $mode_scale = 1.29          # mode scale | mode 缩放 默认1.29 只在mode下生效
 $min_timestep = 0           #最小时序，默认值0
 $max_timestep = 1000        #最大时间步 默认1000
-$show_timesteps = ""        #是否显示timesteps
+$show_timesteps = ""        #是否显示timesteps， console/images
 
 # Learning rate | 学习率
-$lr = "1e-4"
+$lr = "1e-3"
 # $unet_lr = "5e-4"
 # $text_encoder_lr = "2e-5"
 $lr_scheduler = "cosine_with_min_lr"
@@ -134,8 +148,11 @@ $scale_weight_norms = 0 # scale weight norms (1 is a good starting point)| scale
 # $train_text_encoder_only = 0 # train Text Encoder only | 仅训练 文本编码器
 
 #precision and accelerate/save memory
-$attn_mode = "sageattn"                                                             # "flash", "sageattn", "xformers", "sdpa"
-$mixed_precision = "bf16"                                                           # fp16 | fp32 |bf16 default: bf16
+$attn_mode = "xformers"                                                                # "flash", "sageattn", "xformers", "sdpa"
+$split_attn = $True                                                                 # split attention | split attention
+$mixed_precision = "bf16"                                                           # fp16 |bf16 default: bf16
+# $full_fp16 = $False
+# $full_bf16 = $True
 $dit_dtype = ""                                                                     # fp16 | fp32 |bf16 default: bf16
 
 $vae_dtype = ""                                                                     # fp16 | fp32 |bf16 default: fp16
@@ -150,7 +167,7 @@ $fp8_llm = $False                                                               
 $max_data_loader_n_workers = 8                                                      # max data loader n workers | 最大数据加载线程数
 $persistent_data_loader_workers = $True                                             # save every n epochs | 每多少轮保存一次
 
-$blocks_to_swap = 0                                                                # 交换的块数
+$blocks_to_swap = 0                                                                 # 交换的块数
 $img_in_txt_in_offloading = $True                                                   # img in txt in offloading
 
 #optimizer
@@ -176,8 +193,18 @@ $save_state_on_train_end = $False     # save state on train end |只在训练结
 $save_last_n_epochs_state = ""        # save last n epochs state | 保存最后多少轮训练状态
 $save_last_n_steps_state = ""         # save last n steps state | 保存最后多少步训练状态
 
+#LORA_PLUS
+$enable_lora_plus = $True
+$loraplus_lr_ratio = 4                #recommend 4~16
+
+#target blocks
+$enable_blocks = $False
+$enable_double_blocks_only = $False
+$exclude_patterns="" # Specify the values as a list. For example, "exclude_patterns=[r'.*single_blocks.*', r'.*double_blocks\.[0-9]\..*']".
+$include_patterns="" # Specify the values as a list. For example, "include_patterns=[r'.*single_blocks\.\d{2}\.linear.*']".
+
 #lycoris组件
-$enable_lycoris = 0 # 开启lycoris
+$enable_lycoris = $False # 开启lycoris
 $conv_dim = 0 #卷积 dim，推荐＜32
 $conv_alpha = 0 #卷积 alpha，推荐1或者0.3
 $algo = "lokr" # algo参数，指定训练lycoris模型种类，
@@ -203,19 +230,19 @@ $preset = "attn-mlp" #预设训练模块配置
 #./toml/example_lycoris.toml: 也可以直接使用外置配置文件，制定各个层和模块使用不同算法训练，需要输入位置文件路径，参考样例已添加。
 
 $factor = 8 #只适用于lokr的因子，-1~8，8为全维度
-$decompose_both = 0 #适用于lokr的参数，对 LoKr 分解产生的两个矩阵执行 LoRA 分解（默认情况下只分解较大的矩阵）
+$decompose_both = $false #适用于lokr的参数，对 LoKr 分解产生的两个矩阵执行 LoRA 分解（默认情况下只分解较大的矩阵）
 $block_size = 4 #适用于dylora,分割块数单位，最小1也最慢。一般4、8、12、16这几个选
-$use_tucker = 0 #适用于除 (IA)^3 和full
-$use_scalar = 0 #根据不同算法，自动调整初始权重
-$train_norm = 0 #归一化层
+$use_tucker = $false #适用于除 (IA)^3 和full
+$use_scalar = $false #根据不同算法，自动调整初始权重
+$train_norm = $false #归一化层
 $dora_wd = 1 #Dora方法分解，低rank使用。适用于LoRA, LoHa, 和LoKr
-$full_matrix = 0  #全矩阵分解
-$bypass_mode = 0 #通道模式，专为 bnb 8 位/4 位线性层设计。(QLyCORIS)适用于LoRA, LoHa, 和LoKr
+$full_matrix = $false  #全矩阵分解
+$bypass_mode = $false #通道模式，专为 bnb 8 位/4 位线性层设计。(QLyCORIS)适用于LoRA, LoHa, 和LoKr
 $rescaled = 1 #适用于设置缩放，效果等同于OFT
-$constrain = 0 #设置值为FLOAT，效果等同于COFT
+$constrain = $false #设置值为FLOAT，效果等同于COFT
 
 #sample | 输出采样图片
-$enable_sample = 0 #1开启出图，0禁用
+$enable_sample = $True #1开启出图，0禁用
 $sample_at_first = 1 #是否在训练开始时就出图
 $sample_every_n_epochs = 2 #每n个epoch出一次图
 $sample_prompts = "./toml/qinglong.txt" #prompt文件路径
@@ -239,8 +266,8 @@ $save_state_to_huggingface = $False # save state to huggingface | 保存训练�
 $resume_from_huggingface = $False # resume from huggingface | 从huggingface恢复训练
 
 #DDP | 多卡设置
-$multi_gpu = 0                         #multi gpu | 多显卡训练开关，0关1开， 该参数仅限在显卡数 >= 2 使用
-$highvram = 0                            #高显存模式，开启后会尽量使用显存
+$multi_gpu = $False                         #multi gpu | 多显卡训练开关，0关1开， 该参数仅限在显卡数 >= 2 使用
+# $highvram = 0                            #高显存模式，开启后会尽量使用显存
 # $deepspeed = 0                         #deepspeed | 使用deepspeed训练，0关1开， 该参数仅限在显卡数 >= 2 使用
 # $zero_stage = 2                        #zero stage | zero stage 0,1,2,3,阶段2用于训练 该参数仅限在显卡数 >= 2 使用
 # $offload_optimizer_device = ""      #offload optimizer device | 优化器放置设备，cpu或者nvme, 该参数仅限在显卡数 >= 2 使用
@@ -250,10 +277,73 @@ $ddp_timeout = 120 #ddp timeout | ddp超时时间，单位秒， 该参数仅限
 $ddp_gradient_as_bucket_view = 1 #ddp gradient as bucket view | ddp梯度作为桶视图，0关1开， 该参数仅限在显卡数 >= 2 使用
 $ddp_static_graph = 1 #ddp static graph | ddp静态图，0关1开， 该参数仅限在显卡数 >= 2 使用
 ```
+</details>
+
+<details>
+<summary>
 
 ### 4、convert_lora.ps1
+</summary>
+
 ```
 $input_path="./output_dir/hyvideo-qinglong.safetensors"
 $output_path="./output_dir/hyvideo-qinglong_comfy.safetensors"
 $target="other" # "other" or "default"
 ```
+
+</details>
+
+<details>
+<summary>
+
+### 5、generate.ps1
+</summary>
+
+```
+#Parameters from hv_generate_video.py
+$dit = "./ckpts/hunyuan-video-t2v-720p/transformers/mp_rank_00_model_states.pt" # DiT checkpoint path or directory
+$vae = "./ckpts/hunyuan-video-t2v-720p/vae/pytorch_model.pt" # VAE checkpoint path or directory
+$vae_dtype = "" # data type for VAE, default is float16
+$text_encoder1 = "./ckpts/text_encoder/llava_llama3_fp16.safetensors" # Text Encoder 1 directory
+$text_encoder2 = "./ckpts/text_encoder_2/clip_l.safetensors" # Text Encoder 2 directory
+
+# LoRA
+$lora_weight = "./output_dir/hyvideo-qinglong.safetensors" # LoRA weight path
+$lora_multiplier = "1.0" # LoRA multiplier
+
+$prompt = """ a girl with long, flowing green hair adorned with a hair
+ornament, a yellow flower, and a yellow rose. Her hair falls between her
+eyes, and she has heterochromia, with one eye being blue and the other brown
+or yellow. She is looking directly at the viewer with her mouth slightly
+open, then laughting. Her attire consists of a green crop top
+with puffy short sleeves, which are detached, revealing her collarbone and
+bare shoulders. The top is complemented by a green skirt, and she wears a
+green choker around her neck. Adding to her unique appearance, she has deer
+ears and reindeer antlers, and a mini crown rests atop her head. A brooch and
+a green bow further accentuate her outfit. The background is simple and
+black, ensuring that the focus remains solely on the a girl.
+"""
+$video_size = "512 512" # video size
+$video_length = 129 # video length
+$infer_steps = 50 # number of inference steps
+$save_path = "./output_dir" # path to save generated video
+$seed = 1026 # Seed for evaluation.
+$embedded_cfg_scale = 6.0 # Embeded classifier free guidance scale.
+
+# Flow Matching
+$flow_shift = 7.0 # Shift factor for flow matching schedulers.
+
+$fp8 = $true # use fp8 for DiT model
+$fp8_llm = $false # use fp8 for Text Encoder 1 (LLM)
+$device = "" # device to use for inference. If None, use CUDA if available, otherwise use CPU
+$attn_mode = "sageattn" # attention mode
+$split_attn = $true # use split attention
+$vae_chunk_size = 32 # chunk size for CausalConv3d in VAE
+$vae_spatial_tile_sample_min_size = 128 # spatial tile sample min size for VAE, default 256
+$blocks_to_swap = 0 # number of blocks to swap in the model
+$img_in_txt_in_offloading = $true # offload img_in and txt_in to cpu
+$output_type = "video" # output type
+$no_metadata = $false # do not save metadata
+$latent_path = "" # path to latent for decode. no inference
+```
+</details>
