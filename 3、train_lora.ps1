@@ -109,8 +109,19 @@ $save_state_on_train_end = $False     # save state on train end |只在训练结
 $save_last_n_epochs_state = ""        # save last n epochs state | 保存最后多少轮训练状态
 $save_last_n_steps_state = ""         # save last n steps state | 保存最后多少步训练状态
 
+#LORA_PLUS
+$enable_lora_plus = $True
+$loraplus_lr_ratio = 4
+
+#target blocks
+$enable_blocks = $True
+$enable_double_blocks_only = $True
+$exclude_patterns="" # Specify the values as a list. For example, "exclude_patterns=[r'.*single_blocks.*', r'.*double_blocks\.[0-9]\..*']".
+$include_patterns="" # Specify the values as a list. For example, "include_patterns=[r'.*single_blocks\.\d{2}\.linear.*']".
+
 #lycoris组件
 $enable_lycoris = 0 # 开启lycoris
+$enable_lycoris = $False # 开启lycoris
 $conv_dim = 0 #卷积 dim，推荐＜32
 $conv_alpha = 0 #卷积 alpha，推荐1或者0.3
 $algo = "lokr" # algo参数，指定训练lycoris模型种类，
@@ -213,6 +224,7 @@ $ext_args = [System.Collections.ArrayList]::new()
 $launch_args = [System.Collections.ArrayList]::new()
 $laungh_script = "hv_train_network"
 $network_module = "networks.lora"
+$has_network_args = $False
 
 if (-not ($train_mode -ilike "*lora")) {
   $network_module = ""
@@ -221,7 +233,8 @@ if (-not ($train_mode -ilike "*lora")) {
   $network_weights = ""
   $dim_from_weights = $False
   $scale_weight_norms = 0
-  $enable_lycoris = 0
+  $enable_lycoris = $False
+  $enable_lora_plus = $False
   $training_comment = ""
   $network_dropout = "0"
 }
@@ -404,6 +417,31 @@ if ($enable_lycoris) {
       [void]$ext_args.Add("constrain=$constrain")
     }
   }
+}
+elseif ($enable_lora_plus) {
+  [void]$ext_args.Add("--network_args")
+  $has_network_args = $True
+  if ($loraplus_lr_ratio) {
+    [void]$ext_args.Add("loraplus_lr_ratio=$loraplus_lr_ratio")
+  }
+}
+elseif ($enable_blocks) {
+  if (!$has_network_args) {
+    [void]$ext_args.Add("--network_args")
+    $has_network_args = $True
+  }
+  if ($enable_double_blocks_only) {
+    [void]$ext_args.Add("exclude_patterns=[r'.*single_blocks.*']")
+    $exclude_patterns = ""
+    $include_patterns = ""
+  }
+  if ($exclude_patterns) {
+    [void]$ext_args.Add("exclude_patterns=$exclude_patterns")
+  }
+  if ($include_patterns) {
+    [void]$ext_args.Add("include_patterns=$include_patterns")
+  }
+
 }
 
 if ($network_dim) {
