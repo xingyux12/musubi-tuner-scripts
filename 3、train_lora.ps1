@@ -19,7 +19,7 @@ $base_weights_multiplier = "1.0" #指定合并模型的权重，多个用空格�
 
 #train config | 训练配置
 $max_train_steps = ""                                                                # max train steps | 最大训练步数
-$max_train_epochs = 10                                                               # max train epochs | 最大训练轮数
+$max_train_epochs = 15                                                               # max train epochs | 最大训练轮数
 $gradient_checkpointing = 1                                                          # 梯度检查，开启后可节约显存，但是速度变慢
 $gradient_accumulation_steps = 4                                                     # 梯度累加数量，变相放大batchsize的倍数
 $guidance_scale = 1.0
@@ -98,7 +98,7 @@ $wandb_api_key = ""                   # wandbAPI KEY，用于登录
 
 # save and load settings | 保存和输出设置
 $output_name = "hyvideo-qinglong"  # output model name | 模型保存名称
-$save_every_n_epochs = "10"           # save every n epochs | 每多少轮保存一次
+$save_every_n_epochs = "4"           # save every n epochs | 每多少轮保存一次
 $save_every_n_steps = ""              # save every n steps | 每多少步保存一次
 $save_last_n_epochs = ""            # save last n epochs | 保存最后多少轮
 $save_last_n_steps = ""               # save last n steps | 保存最后多少步
@@ -158,7 +158,7 @@ $rescaled = 1 #适用于设置缩放，效果等同于OFT
 $constrain = $false #设置值为FLOAT，效果等同于COFT
 
 #sample | 输出采样图片
-$enable_sample = 0 #1开启出图，0禁用
+$enable_sample = $True #1开启出图，0禁用
 $sample_at_first = 1 #是否在训练开始时就出图
 $sample_every_n_epochs = 2 #每n个epoch出一次图
 $sample_prompts = "./toml/qinglong.txt" #prompt文件路径
@@ -723,6 +723,10 @@ if ($optimizer_type -ieq "adopt") {
   [void]$ext_args.Add("--optimizer_type=pytorch_optimizer.ADOPT")
   [void]$ext_args.Add("--optimizer_args")
   [void]$ext_args.Add("cautious=True")
+}
+
+if ($optimizer_type -ilike "pytorch_optimizer.*") {
+  [void]$ext_args.Add("--optimizer_type=$optimizer_type")
 }
 
 if ($max_grad_norm -ne 1.0) {
