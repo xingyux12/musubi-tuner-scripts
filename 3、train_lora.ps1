@@ -19,7 +19,7 @@ $base_weights_multiplier = "1.0" #指定合并模型的权重，多个用空格�
 
 #train config | 训练配置
 $max_train_steps = ""                                                                # max train steps | 最大训练步数
-$max_train_epochs = 40                                                               # max train epochs | 最大训练轮数
+$max_train_epochs = 10                                                               # max train epochs | 最大训练轮数
 $gradient_checkpointing = 1                                                          # 梯度检查，开启后可节约显存，但是速度变慢
 $gradient_accumulation_steps = 4                                                     # 梯度累加数量，变相放大batchsize的倍数
 $guidance_scale = 1.0
